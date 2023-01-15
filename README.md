@@ -15,12 +15,14 @@ There is currently no available standalone serial monitor application for Mac.
 - Connect to serial devices through a simple interface
 - Adjustable baud rate and data bits
 - Copy and save output to clipboard or file.
+- Set the output format for upcoming output to: ASCII, hex, binary.
 
 ## Future Features
 
-- resizeable window
+- Resizeable window
 - Settings profiles
 - themes
+- support sending hex and binary data, currently it's only text.
 
 ... open for suggestions
 
