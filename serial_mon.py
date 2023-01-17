@@ -85,7 +85,7 @@ class SerialMon(tk.Tk):
 
         self.output_format_txt = ttk.Radiobutton(self.output_format_frame, text='txt', variable=self.output_format_var, value='txt')
         self.output_format_hex = ttk.Radiobutton(self.output_format_frame, text='hex', variable=self.output_format_var, value='hex')
-        self.output_format_bin = ttk.Radiobutton(self.output_format_frame, text='bin', variable=self.output_format_var, value='bin')
+        self.output_format_bytes = ttk.Radiobutton(self.output_format_frame, text='bytes', variable=self.output_format_var, value='bytes')
 
         self.output_btn_frame = ttk.Labelframe(self, text="Output text")
         self.output_clear_btn = ttk.Button(self.output_btn_frame, text='Clear', command=self.output_clear)
@@ -108,7 +108,7 @@ class SerialMon(tk.Tk):
 
         self.output_format_txt.grid(row=0, column=0, sticky="e")
         self.output_format_hex.grid(row=0, column=1, sticky="e")
-        self.output_format_bin.grid(row=0, column=2, sticky="e")
+        self.output_format_bytes.grid(row=0, column=2, sticky="e")
 
         self.output_clear_btn.grid(row=1, column=0, sticky="e")
         self.output_copy_btn.grid(row=1, column=1, sticky="e")
@@ -260,13 +260,14 @@ class SerialMon(tk.Tk):
                 exit(0)
 
             if self.conn_status == DevState.CONNECTED:
-                data_str = self.ser.readline().decode('utf-8')
-                self.output_append(data_str, prefix='<-- ')
+                data_str = self.ser.read().decode('utf-8')
+                self.output_append(data_str, prefix='')
 
     def send(self, event=None):
         send_str = str(self.send_entry.get())
         print(f"send: {send_str}")
-        self.output_append(send_str, prefix='--> ', new_line=True)
+        self.output_append(send_str, prefix='\n--> ', new_line=True)
+        self.output_append('\n', prefix='<-- ', new_line=False)
         send_bytes = bytearray()
         send_bytes.extend(send_str.encode())
         self.ser.write(send_bytes)
@@ -280,17 +281,15 @@ class SerialMon(tk.Tk):
         data_str = ''
 
         if self.output_format_var.get() == 'txt':
-            for i in data_in:
-                data_str += i
-            if new_line:
-                data_str += '\n'
+            data_str += data_in
         elif self.output_format_var.get() == 'hex':
             for i in data_in:
-                data_str += f'{ord(i):02x} '
-            data_str += '\n'
-        elif self.output_format_var.get() == 'bin':
+                data_str += f'0x{ord(i):02x} '
+        elif self.output_format_var.get() == 'bytes':
             for i in data_in:
-                data_str += f'{ord(i):08b} '
+                data_str += str(bytes(i, 'utf-8')) + ' '
+
+        if new_line:
             data_str += '\n'
 
         out_str = prefix + data_str
