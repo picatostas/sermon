@@ -22,7 +22,8 @@ class SerialMon(tk.Tk):
         super(SerialMon, self).__init__()
         self.title('Serial Monitor')
         self.conn_status = DevState.NC
-        self.resizable(False, False)
+        self.minsize(820, 600)
+        self.resizable(True, True)
         self.devices_frame = ttk.Labelframe(self, text="Devices")
 
         self.devices = self.get_devices()
@@ -57,7 +58,7 @@ class SerialMon(tk.Tk):
         self.stopbits_label.grid(row=1, column=2, sticky="WE")
         self.stopbits_select.grid(row=1, column=3, sticky="WE")
 
-        self.settings_frame.grid(row=0, column=2, sticky='NSw')
+        self.settings_frame.grid(row=0, column=1, columnspan=2, sticky='NSw')
 
         self.send_frame = tk.LabelFrame(self, text='Send')
         self.send_entry = ttk.Entry(self.send_frame)
@@ -107,8 +108,11 @@ class SerialMon(tk.Tk):
         self.read_stop_event = threading.Event()
 
         self.output_scrollbar.config(command=self.output_text.yview)
-        self.output_text.grid(row=0, column=0, sticky="we")
+        self.output_text.grid(row=0, column=0, sticky="nswe")
         self.output_scrollbar.grid(row=0, column=1, sticky="nse")
+
+        self.output_text.grid_rowconfigure(0, weight=1)
+        self.output_scrollbar.grid_rowconfigure(0, weight=1)
 
         self.output_format_txt.grid(row=0, column=0, sticky="e")
         self.output_format_hex.grid(row=0, column=1, sticky="e")
@@ -118,12 +122,17 @@ class SerialMon(tk.Tk):
         self.output_copy_btn.grid(row=1, column=1, sticky="e")
         self.output_save_btn.grid(row=1, column=2, sticky="e")
 
-        self.output_format_frame.grid(row=0, column=1, sticky="nsew")
+        self.output_format_frame.grid(row=1, column=1, sticky="nsew")
 
-        self.output_btn_frame.grid(row=1, column=2, sticky="nsew")
+        self.output_btn_frame.grid(row=1, column=2, sticky="nse")
 
         self.output_frame.grid(row=2, column=0, columnspan=self.grid_size()[0], sticky="nsew")
         self.output_frame.grid_columnconfigure(0, weight=1)
+        self.output_frame.grid_rowconfigure(0, weight=1)
+
+        # Make the frames follow the window size
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
 
     def output_clear(self):
         self.output_text.configure(state="normal")
