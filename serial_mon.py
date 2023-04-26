@@ -80,6 +80,10 @@ class SerialMon(tk.Tk):
         self.output_scrollbar = tk.Scrollbar(self.output_frame)
         self.output_text = tk.Text(self.output_frame, yscrollcommand=self.output_scrollbar.set)
 
+        self.read_buffer = ''
+        # Add an interval variable to control the update frequency
+        self.update_interval = 50  # in ms
+
         self.output_format_frame = ttk.Labelframe(self, text="Output format")
         self.output_format_var = tk.StringVar(self.output_format_frame, 'txt')
 
@@ -261,7 +265,13 @@ class SerialMon(tk.Tk):
 
             if self.conn_status == DevState.CONNECTED:
                 data_str = self.ser.read().decode('utf-8')
-                self.output_append(data_str, prefix='')
+                self.read_buffer += data_str
+                self.after(self.update_interval, self.update_text_box)
+
+    def update_text_box(self):
+        self.output_append(self.read_buffer, prefix='')
+        self.read_buffer = ''
+
 
     def send(self, event=None):
         send_str = str(self.send_entry.get())
