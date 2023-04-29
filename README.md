@@ -17,10 +17,10 @@ There is currently no available standalone serial monitor application for Mac.
 - Copy and save output to clipboard or file.
 - Set the output format for upcoming output to: ASCII, hex, binary.
 - Resizeable window
+- Settings profiles
 
 ## Future Features
 
-- Settings profiles
 - themes
 - support sending hex and binary data, currently it's only text.
 
