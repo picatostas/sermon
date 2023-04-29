@@ -10,6 +10,7 @@ import serial
 
 import platform
 
+import yaml
 
 class DevState(enum.Enum):
     NC = 0
@@ -24,6 +25,27 @@ class SerialMon(tk.Tk):
         self.conn_status = DevState.NC
         self.minsize(820, 600)
         self.resizable(True, True)
+
+        # Load preferences from YAML file
+        with open('preferences.yaml', 'r') as f:
+            preferences = yaml.safe_load(f)
+        self.available_profiles = preferences['conection_profiles']
+        self.current_settings = tk.StringVar(value=preferences['current_settings']['conection_profile'])
+        # Create menu bar
+        self.menu_bar = tk.Menu(self)
+
+        # Create preferences menu
+        self.preferences_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_cascade(label="Preferences", menu=self.preferences_menu)
+
+        # Create serial port settings menu
+        self.serial_port_settings_menu = tk.Menu(self.preferences_menu, tearoff=0)
+        for profile in self.available_profiles:
+            self.serial_port_settings_menu.add_radiobutton(label=profile, value=profile, variable=self.current_settings,
+                                                    command=self.handle_setting_change,
+                                                    indicatoron=1, activebackground='gray')
+        self.preferences_menu.add_cascade(label="Serial Port Settings", menu=self.serial_port_settings_menu)
+        self.config(menu=self.menu_bar)
         self.devices_frame = ttk.Labelframe(self, text="Devices")
 
         self.devices = self.get_devices()
@@ -134,6 +156,14 @@ class SerialMon(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
 
+    def handle_setting_change(self):
+        profile_name = self.current_settings.get()
+        profile = self.available_profiles[profile_name]
+        print(f'Setting changed to: {profile}')
+        self.parity_select.set(profile['parity'])
+        self.baudrate_select.set(profile['baud_rate'])
+        self.bytesize_select.set(profile['data_bits'])
+        self.stopbits_select.set(profile['stop_bits'])
     def output_clear(self):
         self.output_text.configure(state="normal")
         self.output_text.delete(1.0, tk.END)
