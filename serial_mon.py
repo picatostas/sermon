@@ -12,6 +12,8 @@ import platform
 
 import yaml
 
+import webbrowser
+
 class DevState(enum.Enum):
     NC = 0
     CONNECTED = 1
@@ -45,7 +47,12 @@ class SerialMon(tk.Tk):
                                                     command=self.handle_setting_change,
                                                     indicatoron=1, activebackground='gray')
         self.preferences_menu.add_cascade(label="Serial Port Settings", menu=self.serial_port_settings_menu)
+        # Create About menu
+        self.help_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.help_menu.add_command(label="About", command=self.show_about)
+        self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
         self.config(menu=self.menu_bar)
+
         self.devices_frame = ttk.Labelframe(self, text="Devices")
 
         self.devices = self.get_devices()
@@ -155,6 +162,21 @@ class SerialMon(tk.Tk):
         # Make the frames follow the window size
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
+
+    def show_about(self):
+        # Show the about dialog
+        about_popup = tk.Toplevel(self)
+        about_text = f"This is Sermon. \n\nIt is licensed under the GPL-v3 license.\n\n"
+        about_popup.title("About")
+        about_label = tk.Label(about_popup, text=about_text)
+        about_label.pack()
+        link_label = tk.Label(about_popup, text="https://github.com/picatostas", fg="blue", cursor="hand2")
+        link_label.pack()
+
+        def callback(event):
+            webbrowser.open_new(event.widget.cget("text"))
+
+        link_label.bind("<Button-1>", callback)
 
     def handle_setting_change(self):
         profile_name = self.current_settings.get()
