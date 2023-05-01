@@ -1,16 +1,16 @@
-conection_profiles:
+connection_profiles:
   default:
     name: 'default'
     baud_rate: 115200
     data_bits: 8
     stop_bits: 1
     parity: 'N'
-  pedalmorph:
-    name: 'pedalmorph'
+  custom:
+    name: 'custom'
     baud_rate: 921600
     data_bits: 8
     stop_bits: 1
     parity: 'N'
 
 current_settings:
-  conection_profile: "pedalmorph"
+  connection_profile: "pedalmorph"

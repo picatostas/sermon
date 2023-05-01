@@ -11,6 +11,7 @@ import serial
 import platform
 
 import yaml
+from jsonschema import validate
 
 import webbrowser
 
@@ -31,8 +32,17 @@ class SerialMon(tk.Tk):
         # Load preferences from YAML file
         with open('preferences.yaml', 'r') as f:
             preferences = yaml.safe_load(f)
-        self.available_profiles = preferences['conection_profiles']
-        self.current_settings = tk.StringVar(value=preferences['current_settings']['conection_profile'])
+
+        # Load schema from YAML file
+        with open('preferences-schema.yaml', 'r') as f:
+            schema = yaml.safe_load(f)
+
+        # Validate each connection profile against the schema
+        for profile in preferences['connection_profiles'].values():
+            validate(profile, schema['definitions']['connection_profile'])
+
+        self.available_profiles = preferences['connection_profiles']
+        self.current_settings = tk.StringVar(value=preferences['current_settings']['connection_profile'])
         # Create menu bar
         self.menu_bar = tk.Menu(self)
 

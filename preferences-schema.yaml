@@ -1,0 +1,35 @@
+type: object
+properties:
+  connection_profiles:
+    type: object
+    additionalProperties:
+      $ref: '#/definitions/connection_profile'
+  current_settings:
+    type: object
+    properties:
+      connection_profile:
+        type: string
+    required:
+      - connection_profile
+required:
+  - connection_profiles
+definitions:
+  connection_profile:
+    type: object
+    properties:
+      name:
+        type: string
+      baud_rate:
+        type: integer
+      data_bits:
+        enum: [5, 6, 7, 8]
+      stop_bits:
+        enum: [1, 1.5, 2]
+      parity:
+        enum: ['N', 'E', 'O', 'M', 'S']
+    required:
+      - name
+      - baud_rate
+      - data_bits
+      - stop_bits
+      - parity
