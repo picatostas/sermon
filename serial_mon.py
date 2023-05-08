@@ -1,4 +1,7 @@
 import tkinter as tk
+# Styled widgets/themes
+import TKinterModernThemes as TKMT
+# To use styled widgets
 from tkinter import ttk
 import tkinter.messagebox as tk_msg
 from tkinter import filedialog
@@ -20,14 +23,13 @@ class DevState(enum.Enum):
     CONNECTED = 1
 
 
-class SerialMon(tk.Tk):
+class SerialMon(TKMT.ThemedTKinterFrame):
 
     def __init__(self):
-        super(SerialMon, self).__init__()
-        self.title('Serial Monitor')
+        super(SerialMon, self).__init__(title='Serial Monitor', theme='forest', mode='dark')
         self.conn_status = DevState.NC
-        self.minsize(820, 600)
-        self.resizable(True, True)
+        self.master.minsize(1200, 600)
+        self.master.resizable(True, True)
 
         # Load preferences from YAML file
         with open('preferences.yaml', 'r') as f:
@@ -44,7 +46,7 @@ class SerialMon(tk.Tk):
         self.available_profiles = self.preferences['connection_profiles']
         self.current_settings = tk.StringVar(value=self.preferences['current_settings']['connection_profile'])
         # Create menu bar
-        self.menu_bar = tk.Menu(self)
+        self.menu_bar = tk.Menu(self.master)
 
         # Create preferences menu
         self.preferences_menu = tk.Menu(self.menu_bar, tearoff=0)
@@ -64,9 +66,9 @@ class SerialMon(tk.Tk):
         self.help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.help_menu.add_command(label="About", command=self.show_about)
         self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
-        self.config(menu=self.menu_bar)
+        self.master.config(menu=self.menu_bar)
 
-        self.devices_frame = ttk.Labelframe(self, text="Devices")
+        self.devices_frame = ttk.Labelframe(self.master, text="Devices")
 
         self.devices = self.get_devices()
         self.device_select = ttk.Combobox(self.devices_frame, values=self.devices)
@@ -78,7 +80,7 @@ class SerialMon(tk.Tk):
 
         self.devices_frame.grid(row=0, column=0, sticky="W")
 
-        self.settings_frame = ttk.Labelframe(self, text="Connection settings")
+        self.settings_frame = ttk.Labelframe(self.master, text="Connection settings")
 
         self.baudrate_select = ttk.Combobox(self.settings_frame, values=list(serial.SerialBase.BAUDRATES)[::-1], state="readonly")
         self.baudrate_label = tk.Label(self.settings_frame, text='Baudrate')
@@ -102,15 +104,15 @@ class SerialMon(tk.Tk):
 
         self.settings_frame.grid(row=0, column=1, columnspan=2, sticky='NSw')
 
-        self.send_frame = tk.LabelFrame(self, text='Send')
+        self.send_frame = ttk.LabelFrame(self.master, text='Send')
         self.send_entry = ttk.Entry(self.send_frame)
         self.send_entry.grid(row=0, column=0, sticky="w")
         self.send_btn = ttk.Button(self.send_frame, text="Send", command=self.send)
         self.send_btn.grid(row=0, column=1, sticky="w")
         self.send_cr_value = tk.BooleanVar()
-        self.send_cr_check = tk.Checkbutton(self.send_frame, text='CR', variable=self.send_cr_value)
+        self.send_cr_check = ttk.Checkbutton(self.send_frame, text='CR', variable=self.send_cr_value)
         self.send_lf_value = tk.BooleanVar()
-        self.send_lf_check = tk.Checkbutton(self.send_frame, text='LF', variable=self.send_lf_value)
+        self.send_lf_check = ttk.Checkbutton(self.send_frame, text='LF', variable=self.send_lf_value)
         self.send_cr_check.grid(row=0, column=2)
         self.send_lf_check.grid(row=0, column=3)
 
@@ -118,7 +120,7 @@ class SerialMon(tk.Tk):
 
         self.send_frame.grid(row=1, column=0, columnspan=2, sticky="w")
 
-        self.output_frame = tk.Frame(self)
+        self.output_frame = tk.Frame(self.master)
 
         self.output_scrollbar = tk.Scrollbar(self.output_frame)
         self.output_text = tk.Text(self.output_frame, yscrollcommand=self.output_scrollbar.set)
@@ -127,18 +129,18 @@ class SerialMon(tk.Tk):
         # Add an interval variable to control the update frequency
         self.update_interval = 50  # in ms
 
-        self.output_format_frame = ttk.Labelframe(self, text="Output format")
+        self.output_format_frame = ttk.Labelframe(self.master, text="Output format")
         self.output_format_var = tk.StringVar(self.output_format_frame, 'txt')
 
         self.output_format_txt = ttk.Radiobutton(self.output_format_frame, text='txt', variable=self.output_format_var, value='txt')
         self.output_format_hex = ttk.Radiobutton(self.output_format_frame, text='hex', variable=self.output_format_var, value='hex')
         self.output_format_bytes = ttk.Radiobutton(self.output_format_frame, text='bytes', variable=self.output_format_var, value='bytes')
 
-        self.output_btn_frame = ttk.Labelframe(self, text="Output text")
+        self.output_btn_frame = ttk.Labelframe(self.master, text="Output text")
         self.output_clear_btn = ttk.Button(self.output_btn_frame, text='Clear', command=self.output_clear)
         self.output_copy_btn = ttk.Button(self.output_btn_frame, text='Copy to clipboard', command=self.output_copy_to_clipboard)
         self.output_save_btn = ttk.Button(self.output_btn_frame, text='Save to file', command=self.output_save_to_file)
-        self.output_text.configure(state="disabled", bg="#eeeeee", fg="#999999")
+        # self.output_text.configure(state="disabled", fg="#999999")
 
         for item in self.settings_frame.winfo_children():
             item['state'] = tk.NORMAL
@@ -164,25 +166,25 @@ class SerialMon(tk.Tk):
         self.output_copy_btn.grid(row=1, column=1, sticky="e")
         self.output_save_btn.grid(row=1, column=2, sticky="e")
 
-        self.output_format_frame.grid(row=1, column=1, sticky="nsew")
+        self.output_format_frame.grid(row=1, column=1, sticky="nse")
 
         self.output_btn_frame.grid(row=1, column=2, sticky="nse")
 
-        self.output_frame.grid(row=2, column=0, columnspan=self.grid_size()[0], sticky="nsew")
+        self.output_frame.grid(row=2, column=0, columnspan=self.master.grid_size()[0], sticky="nsew")
         self.output_frame.grid_columnconfigure(0, weight=1)
         self.output_frame.grid_rowconfigure(0, weight=1)
 
         # Make the frames follow the window size
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
+        self.master.grid_columnconfigure(0, weight=1)
+        self.master.grid_rowconfigure(2, weight=1)
         # apply the read profile
         self.handle_setting_change()
         # split the exit sequence so we can do some stuff before the application closes
-        self.protocol("WM_DELETE_WINDOW", self.save_preferences)
+        self.master.protocol("WM_DELETE_WINDOW", self.save_preferences)
 
     def show_about(self):
         # Show the about dialog
-        about_popup = tk.Toplevel(self)
+        about_popup = tk.Toplevel(self.master)
         about_text = f"This is Sermon. \n\nIt is licensed under the GPL-v3 license.\n\n"
         about_popup.title("About")
         about_label = tk.Label(about_popup, text=about_text)
@@ -206,7 +208,7 @@ class SerialMon(tk.Tk):
 
     def show_save_preset_pop(self):
 
-        self.save_preset_pop = tk.Toplevel(self)
+        self.save_preset_pop = tk.Toplevel(self.master)
         self.save_preset_pop.title("Save preset")
 
         self.save_preset_label = tk.Label(self.save_preset_pop, text="Enter the name:")
@@ -266,7 +268,7 @@ class SerialMon(tk.Tk):
         # Serialize the updated dictionary to a YAML file
         with open('preferences.yaml', 'w') as f:
             yaml.dump(self.preferences, f)
-        self.destroy()
+        self.master.destroy()
 
 
     def output_clear(self):
@@ -376,7 +378,7 @@ class SerialMon(tk.Tk):
 
                     self.device_connect['text'] = 'Disconnect'
                     self.conn_status = DevState.CONNECTED
-                    self.output_text.configure(fg='#000000', bg='#ffffff')
+                    # self.output_text.configure(fg='#000000')# , bg='#ffffff')
                     self.read_stop_event.clear()
 
                     # Start the thread each time as apparently a thread cannot be started after being
@@ -405,7 +407,7 @@ class SerialMon(tk.Tk):
                     print(f'Disconnected from device: {self.ser.port}')
                     self.device_connect['text'] = 'Connect'
                     self.conn_status = DevState.NC
-                    self.output_text.configure(bg="#eeeeee", fg="#999999")
+                    # self.output_text.configure(fg="#999999")
                     self.ser.close()
                     self.read_stop_event.set()
                     self.devices_refresh['state'] = tk.NORMAL
@@ -473,7 +475,7 @@ class SerialMon(tk.Tk):
 
 def main():
     serial_mon = SerialMon()
-    serial_mon.mainloop()
+    serial_mon.run()
 
 
 if __name__ == '__main__':
