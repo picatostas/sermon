@@ -31,18 +31,18 @@ class SerialMon(tk.Tk):
 
         # Load preferences from YAML file
         with open('preferences.yaml', 'r') as f:
-            preferences = yaml.safe_load(f)
+            self.preferences = yaml.safe_load(f)
 
         # Load schema from YAML file
         with open('preferences-schema.yaml', 'r') as f:
             schema = yaml.safe_load(f)
 
         # Validate each connection profile against the schema
-        for profile in preferences['connection_profiles'].values():
+        for profile in self.preferences['connection_profiles'].values():
             validate(profile, schema['definitions']['connection_profile'])
 
-        self.available_profiles = preferences['connection_profiles']
-        self.current_settings = tk.StringVar(value=preferences['current_settings']['connection_profile'])
+        self.available_profiles = self.preferences['connection_profiles']
+        self.current_settings = tk.StringVar(value=self.preferences['current_settings']['connection_profile'])
         # Create menu bar
         self.menu_bar = tk.Menu(self)
 
@@ -52,11 +52,14 @@ class SerialMon(tk.Tk):
 
         # Create serial port settings menu
         self.serial_port_settings_menu = tk.Menu(self.preferences_menu, tearoff=0)
+        self.serial_port_settings_menu.add_command(label="Save preset", command=self.show_save_preset_pop)
         for profile in self.available_profiles:
             self.serial_port_settings_menu.add_radiobutton(label=profile, value=profile, variable=self.current_settings,
                                                     command=self.handle_setting_change,
                                                     indicatoron=1, activebackground='gray')
+
         self.preferences_menu.add_cascade(label="Serial Port Settings", menu=self.serial_port_settings_menu)
+
         # Create About menu
         self.help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.help_menu.add_command(label="About", command=self.show_about)
@@ -66,7 +69,7 @@ class SerialMon(tk.Tk):
         self.devices_frame = ttk.Labelframe(self, text="Devices")
 
         self.devices = self.get_devices()
-        self.device_select = ttk.Combobox(self.devices_frame, values=self.devices, state="readonly")
+        self.device_select = ttk.Combobox(self.devices_frame, values=self.devices)
         self.device_select.grid(row=0, column=0, sticky="WE", columnspan=2)
         self.device_connect = ttk.Button(self.devices_frame, text="Connect", command=self.handle_device_connection)
         self.device_connect.grid(row=1, column=0, sticky="E")
@@ -172,6 +175,10 @@ class SerialMon(tk.Tk):
         # Make the frames follow the window size
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
+        # apply the read profile
+        self.handle_setting_change()
+        # split the exit sequence so we can do some stuff before the application closes
+        self.protocol("WM_DELETE_WINDOW", self.save_preferences)
 
     def show_about(self):
         # Show the about dialog
@@ -196,6 +203,72 @@ class SerialMon(tk.Tk):
         self.baudrate_select.set(profile['baud_rate'])
         self.bytesize_select.set(profile['data_bits'])
         self.stopbits_select.set(profile['stop_bits'])
+
+    def show_save_preset_pop(self):
+
+        self.save_preset_pop = tk.Toplevel(self)
+        self.save_preset_pop.title("Save preset")
+
+        self.save_preset_label = tk.Label(self.save_preset_pop, text="Enter the name:")
+        self.save_preset_label.grid(row=0, column=0, padx=5, pady=5)
+        self.save_preset_entry = tk.Entry(self.save_preset_pop)
+        self.save_preset_entry.grid(row=1, column=0, padx=5, pady=5)
+
+        self.save_preset_ok_cancel_frame = tk.Frame(self.save_preset_pop)
+        self.ok_button = tk.Button(self.save_preset_ok_cancel_frame, text="Save", command=self.save_preset_pop_ok)
+        self.ok_button.grid(row=2, column=0, padx=5, pady=5)
+        self.cancel_button = tk.Button(self.save_preset_ok_cancel_frame, text="Cancel", command=self.save_preset_pop_cancel)
+        self.cancel_button.grid(row=2, column=1, padx=5, pady=5)
+        self.save_preset_ok_cancel_frame.grid(row=2, column=0, columnspan=2)
+        self.save_preset_entry.focus_set()
+
+        self.save_preset_pop.bind("<Return>", self.save_preset_pop_ok)
+        self.save_preset_pop.bind("<Escape>", self.save_preset_pop_cancel)
+
+
+    def save_preset_pop_ok(self, event):
+
+        user_input = self.save_preset_entry.get()
+
+        new_profile = dict()
+        new_profile['name'] = user_input
+        new_profile['parity'] = self.parity_select.get()
+        new_profile['baud_rate'] = int(self.baudrate_select.get())
+        new_profile['data_bits'] = int(self.bytesize_select.get())
+        new_profile['stop_bits'] = float(self.stopbits_select.get())
+
+        has_empty_values = False
+        for value in new_profile.values():
+            if value == "":
+                has_empty_values = True
+                break
+
+        print(new_profile)
+
+        if user_input == "":
+            tk_msg.showwarning(title="Save preset failed", message="Name cannot be empty")
+        elif has_empty_values:
+            tk_msg.showwarning(title="Save preset failed", message="One of more values are empty")
+            self.save_preset_pop.destroy()
+        else:
+            # Save the new connection profiles to the preferences
+            self.preferences['connection_profiles'][user_input] = new_profile
+            self.serial_port_settings_menu.add_radiobutton(label=new_profile['name'], value=new_profile, variable=self.current_settings,
+                                        command=self.handle_setting_change,
+                                        indicatoron=1, activebackground='gray')
+            self.save_preset_pop.destroy()
+
+    def save_preset_pop_cancel(self,event):
+        # Close the dialog without doing anything
+        self.save_preset_pop.destroy()
+
+    def save_preferences(self):
+        # Serialize the updated dictionary to a YAML file
+        with open('preferences.yaml', 'w') as f:
+            yaml.dump(self.preferences, f)
+        self.destroy()
+
+
     def output_clear(self):
         self.output_text.configure(state="normal")
         self.output_text.delete(1.0, tk.END)
@@ -259,14 +332,32 @@ class SerialMon(tk.Tk):
     def handle_device_connection(self):
         print('Handle Device connection')
         if self.conn_status == DevState.NC:
+            has_empty_values = False
 
-            _baudrate = 921600 if self.baudrate_select.get() == '' else int(self.baudrate_select.get())
+            active_profile = dict()
 
-            _parity = serial.PARITY_NONE if self.parity_select.get() == '' else self.parity_select.get()
+            active_profile['parity'] = self.parity_select.get()
+            active_profile['baud_rate'] = self.baudrate_select.get()
+            active_profile['data_bits'] = self.bytesize_select.get()
+            active_profile['stop_bits'] = self.stopbits_select.get()
 
-            _bytesize = serial.EIGHTBITS if self.bytesize_select.get() == '' else int(self.bytesize_select.get())
+            for value in active_profile.values():
+                if value == "":
+                    has_empty_values = True
+                    break
 
-            _stopbits = serial.STOPBITS_ONE if self.stopbits_select.get() == '' else float(self.stopbits_select.get())
+            if has_empty_values:
+                self.current_settings.set('default')
+            self.handle_setting_change()
+
+
+            _baudrate = int(self.baudrate_select.get())
+
+            _parity = self.parity_select.get()
+
+            _bytesize = int(self.bytesize_select.get())
+
+            _stopbits = float(self.stopbits_select.get())
 
             _port = self.device_select.get()
 

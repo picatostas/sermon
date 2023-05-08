@@ -1,16 +1,15 @@
 connection_profiles:
   default:
-    name: 'default'
+    name: default
     baud_rate: 115200
     data_bits: 8
     stop_bits: 1
-    parity: 'N'
+    parity: N
   custom:
-    name: 'custom'
+    name: custom
     baud_rate: 921600
     data_bits: 8
+    parity: N
     stop_bits: 1
-    parity: 'N'
-
 current_settings:
-  connection_profile: "pedalmorph"
+  connection_profile: custom
