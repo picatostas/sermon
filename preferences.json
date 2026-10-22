@@ -1,0 +1,23 @@
+{
+  "connection_profiles": {
+    "default": {
+      "name": "default",
+      "baud_rate": 115200,
+      "data_bits": 8,
+      "stop_bits": 1,
+      "parity": "N",
+      "flow_control": "none"
+    },
+    "custom": {
+      "name": "custom",
+      "baud_rate": 921600,
+      "data_bits": 8,
+      "stop_bits": 1,
+      "parity": "N",
+      "flow_control": "none"
+    }
+  },
+  "current_settings": {
+    "connection_profile": "default"
+  }
+}
